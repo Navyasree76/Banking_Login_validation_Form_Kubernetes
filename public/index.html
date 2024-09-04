@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Login</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .error {
+            color: red;
+            display: none;
+        }
+        .error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NAVYA SREE BANK</h1>
+        <h2>Login Form</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">User Name:</label>
+                <input type="text" id="username" name="username" required>
+                <small class="error" id="usernameError">User Name is required.</small>
+            </div>
+            <div class="form-group">
+                <label for="accountNumber">Bank Account Number:</label>
+                <input type="text" id="accountNumber" name="accountNumber" required pattern="\d{12}">
+                <small class="error" id="accountNumberError">Bank Account Number must be 12 digits.</small>
+            </div>
+            <div class="form-group">
+                <label for="dob">Date of Birth:</label>
+                <input type="date" id="dob" name="dob" required min="${new Date().toISOString().split('T')[0]}" value="${new Date().toISOString().split('T')[0]}">
+                <small class="error" id="dobError">Date of Birth is required.</small>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+                <small class="error" id="passwordError">Password must be at least 8 characters long and include uppercase, lowercase letters, numbers, and special characters.</small>
+            </div>
+            <button type="submit" id="submitButton" disabled>Submit</button>
+        </form>
+        <div id="responseMessage"></div>
+    </div>
+
+    <script>
+        var form = document.getElementById('loginForm');
+        var username = document.getElementById('username');
+        var accountNumber = document.getElementById('accountNumber');
+        var dob = document.getElementById('dob');
+        var password = document.getElementById('password');
+        var submitButton = document.getElementById('submitButton');
+        var responseMessage = document.getElementById('responseMessage');
+
+        function validateForm() {
+            var isValid = form.checkValidity();
+            submitButton.disabled = !isValid;
+        }
+
+        function showError(input, errorId) {
+            var error = document.getElementById(errorId);
+            if (!input.validity.valid) {
+                error.classList.add('show');
+            } else {
+                error.classList.remove('show');
+            }
+        }
+
+        function validateAccountNumber() {
+            var accountNumberValue = accountNumber.value;
+            var error = document.getElementById('accountNumberError');
+            var pattern = /^\d{12}$/; 
+            if (!pattern.test(accountNumberValue)) {
+                error.classList.add('show');
+                return false;
+            } else {
+                error.classList.remove('show');
+                return true;
+            }
+        }
+
+        function validatePassword() {
+            var passwordValue = password.value;
+            var error = document.getElementById('passwordError');
+            var pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (!pattern.test(passwordValue)) {
+                error.classList.add('show');
+                return false;
+            } else {
+                error.classList.remove('show');
+                return true;
+            }
+        }
+
+        form.addEventListener('input', function() {
+            validateForm();
+            showError(username, 'usernameError');
+            validateAccountNumber();
+            showError(dob, 'dobError');
+            validatePassword();
+        });
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            var isAccountNumberValid = validateAccountNumber();
+            var isPasswordValid = validatePassword();
+
+            if (form.checkValidity() && isAccountNumberValid && isPasswordValid) {
+                try {
+                    var response = await fetch('/submit', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: username.value,
+                            accountNumber: accountNumber.value,
+                            dob: dob.value,
+                            password: password.value
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        alert("Form submitted successfully");
+                        form.reset();
+                        responseMessage.textContent = ''; // Clear any previous error messages
+                        responseMessage.style.color = ''; // Reset color
+                    } else {
+                        const errorMessage = await response.text(); // Get error message from server
+    
+                        responseMessage.textContent = `Error submitting form: ${errorMessage}`;
+                        responseMessage.style.color = 'red';
+                    }
+                } catch (error) {
+                    responseMessage.textContent = 'Error submitting form.';
+                    responseMessage.style.color = 'red';
+                }
+                
+            } else {
+                var message = 'Please fill in all required fields correctly.';
+                if (!isAccountNumberValid) message += '\n- Bank Account Number must be exactly 12 digits.';
+                if (!isPasswordValid) message += '\n- Password must be at least 8 characters long and include uppercase, lowercase letters, numbers, and special characters.';
+                
+                responseMessage.style.color = 'red';
+            }
+        });
+
+        validateForm();
+    </script>
+</body>
+</html>
