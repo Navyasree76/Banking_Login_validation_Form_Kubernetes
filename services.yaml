@@ -4,7 +4,7 @@ metadata:
   name: navya-banking-service
   namespace: default
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     app: app-and-mongodb
   ports:
