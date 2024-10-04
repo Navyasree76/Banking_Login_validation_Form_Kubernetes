@@ -1,4 +1,0 @@
-db.users.find().pretty()
-show collections
-use banking
-show dbs
